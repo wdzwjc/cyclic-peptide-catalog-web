@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cyclic peptide catalog — unlock</title><style>body{margin:0;background:#eef2f5;color:#17202a;font:16px system-ui}main{max-width:380px;margin:15vh auto;padding:28px;background:white;border-radius:14px}input,button{box-sizing:border-box;width:100%;font:inherit;padding:12px;margin-top:14px;border:1px solid #ccd5dc;border-radius:7px}button{background:#0f6b61;color:white;cursor:pointer}#status{min-height:24px}iframe{border:0;width:100vw;height:100vh;display:block}</style><main id="gate"><h1>Cyclic peptide catalog</h1><p>Enter the password to unlock this catalog.</p><form id="unlock"><input id="password" type="password" aria-label="Password" placeholder="Password" required autocomplete="off"><button id="submit">Unlock</button></form><p id="status" role="status"></p></main><script>
+const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+document.querySelector('#unlock').addEventListener('submit',async e=>{
+ e.preventDefault();const status=document.querySelector('#status'),button=document.querySelector('#submit');button.disabled=true;status.textContent='Unlocking…';
+ try{
+ const metaResponse=await fetch('./crypto.json');if(!metaResponse.ok)throw Error('download');const m=await metaResponse.json();
+ const raw=await crypto.subtle.importKey('raw',new TextEncoder().encode(document.querySelector('#password').value),'PBKDF2',false,['deriveKey']);
+ const key=await crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:decode(m.salt),iterations:m.iterations},raw,{name:'AES-GCM',length:256},false,['decrypt']);
+ const r=await fetch('./payload.bin');if(!r.ok)throw Error('download');const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(m.iv)},key,await r.arrayBuffer());
+ document.querySelector('#password').value='';const frame=document.createElement('iframe');frame.title='Unlocked cyclic peptide catalog';frame.setAttribute('sandbox','allow-scripts allow-downloads allow-popups');frame.srcdoc=new TextDecoder().decode(plain);document.body.replaceChildren(frame);document.title='Cyclic peptide catalog';
+ }catch(err){status.textContent=err.name==='OperationError'?'Incorrect password. Try again.':'Could not unlock. Check your connection and try again.';button.disabled=false;}
+});</script></html>
