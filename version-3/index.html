@@ -3,10 +3,10 @@ const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 document.querySelector('#unlock').addEventListener('submit',async e=>{
  e.preventDefault();const status=document.querySelector('#status'),button=document.querySelector('#submit');button.disabled=true;status.textContent='Unlocking…';
  try{
- const metaResponse=await fetch('./crypto-3d.json');if(!metaResponse.ok)throw Error('download');const m=await metaResponse.json();
+ const metaResponse=await fetch('./crypto-bc21b9f3.json');if(!metaResponse.ok)throw Error('download');const m=await metaResponse.json();
  const raw=await crypto.subtle.importKey('raw',new TextEncoder().encode(document.querySelector('#password').value),'PBKDF2',false,['deriveKey']);
  const key=await crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:decode(m.salt),iterations:m.iterations},raw,{name:'AES-GCM',length:256},false,['decrypt']);
- const r=await fetch('./payload-3d.bin');if(!r.ok)throw Error('download');const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(m.iv)},key,await r.arrayBuffer());
+ const r=await fetch('./payload-bc21b9f3.bin');if(!r.ok)throw Error('download');const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(m.iv)},key,await r.arrayBuffer());
  document.querySelector('#password').value='';const frame=document.createElement('iframe');frame.title='Unlocked cyclic peptide catalog';frame.setAttribute('sandbox','allow-scripts allow-downloads allow-popups');frame.srcdoc=new TextDecoder().decode(plain);document.body.replaceChildren(frame);document.title='Cyclic peptide catalog';
  }catch(err){status.textContent=err.name==='OperationError'?'Incorrect password. Try again.':'Could not unlock. Check your connection and try again.';button.disabled=false;}
 });</script></html>
